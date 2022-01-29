@@ -6,12 +6,13 @@ import numpy as np
 import h5py as h5
 
 
-def create_db(grid_n=6, grid_m=6):
+def create_db(grid_n=6, grid_m=6, num_action=6):
     """
     :param grid_n:
     :param grid_m:
     """
     num_cell = grid_n * grid_m
+    num_state = num_cell ** 2
 
     db = tables.open_file('./data.hdf5', mode='w')
 
@@ -41,9 +42,15 @@ def create_db(grid_n=6, grid_m=6):
 
     db.create_earray(
         db.root,
+        name='nested_policies',
+        atom=tables.Float32Atom(),
+        shape=(0, num_state, num_action))
+
+    db.create_earray(
+        db.root,
         name='steps',
         atom=tables.Int32Atom(),
-        shape=(0, 3))
+        shape=(0, 4))
 
     # env_id, goal_state, step_id, traj_length, collisions, failed
     db.create_earray(
@@ -58,11 +65,12 @@ def db_concatenate():
     parser = argparse.ArgumentParser()
     parser.add_argument('--grid_n', type=int, default=6, help='')
     parser.add_argument('--grid_m', type=int, default=6, help='')
+    parser.add_argument('--num_action', type=int, default=6, help='')
     args = parser.parse_args()
 
-    db_names = [f for f in os.listdir() if os.path.isfile(f) and f.endswith('.hdf5')]
+    db_names = [f for f in os.listdir() if os.path.isfile(f) and f.endswith('.hdf5') and f != 'data.hdf5']
 
-    concat_db = create_db(args.grid_n, args.grid_m)
+    concat_db = create_db(args.grid_n, args.grid_m, args.num_action)
 
     for name in db_names:
         db = h5.File(name, 'r')
@@ -76,6 +84,8 @@ def db_concatenate():
             concat_db.root.samples.append(rearranged_sample[None])
         for belief in db['beliefs']:
             concat_db.root.beliefs.append(belief[None])
+        for policy in db['nested_policies']:
+            concat_db.root.nested_policies.append(policy[None])
         for reward in db['expRs']:
             concat_db.root.expRs.append([reward])
         for step in db['steps']:

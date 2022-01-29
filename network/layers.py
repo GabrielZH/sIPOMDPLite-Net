@@ -187,7 +187,7 @@ def conv4d(
         activation=None,
         use_bias=True,
         kernel_initializer=None,
-        bias_initializer=tf.zeros_initializer(),
+        bias_initializer=None,
         kernel_regularizer=None,
         bias_regularizer=None,
         activity_regularizer=None,
@@ -268,7 +268,7 @@ def conv4d(
     assert len(input.get_shape().as_list()) == 6, (
         "Tensor of shape (b, c, l, d, h, w) expected")
     assert len(kernel_size) == 4, "4D kernel size expected"
-    assert strides == (1, 1, 1, 1), (
+    assert (np.array(strides) == 1).all(), (
         "Strides other than 1 not yet implemented")
     assert data_format == 'channels_first', (
         "Data format other than 'channels_first' not yet implemented")
@@ -294,7 +294,7 @@ def conv4d(
         (l_o, d_o, h_o, w_o) = (l_i, d_i, h_i, w_i)
 
     # output tensors for each 3D frame
-    frame_results = [ None ]*l_o
+    frame_results = [None] * l_o
 
     # convolve each kernel frame i with each input frame j
     for i in range(l_k):
@@ -325,7 +325,7 @@ def conv4d(
                 bias_regularizer=bias_regularizer,
                 activity_regularizer=activity_regularizer,
                 trainable=trainable,
-                name=name + '_3dchan%d'%i,
+                name=name + '_3d_chan_%d' % i,
                 reuse=reuse_kernel)
 
             # subsequent frame convolutions should use the same kernel
@@ -374,15 +374,12 @@ def conv4d_layer(
     if w_std is None:
         w_std = 1.0 / np.sqrt(float(input_size * (kernel_size ** 4)))
 
-    bias_initializer = tf.compat.v1.get_variable(
-        name='b_' + name,
-        shape=[num_filter],
-        initializer=tf.constant_initializer(0.0)) if use_bias else None
+    bias_initializer = tf.constant_initializer(0.0) if use_bias else None
 
     output_tensor = conv4d(
         input_tensor,
         filters=num_filter,
-        kernel_size=kernel_size,
+        kernel_size=[kernel_size] * 4,
         kernel_initializer=tf.compat.v1.truncated_normal_initializer(
             mean=w_mean,
             stddev=w_std,

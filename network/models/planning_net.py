@@ -96,6 +96,7 @@ class PlanningNet(object):
             [np.prod(subj_ma_reward_function.get_shape().as_list()[1:3])] +
             subj_ma_reward_function.get_shape().as_list()[3:5] + [1])
         q_values = None
+        reuse = False
 
         for i in range(params.K):
             # Value iteration for non-interactive data points.
@@ -126,6 +127,7 @@ class PlanningNet(object):
                 name='unstack_q_over_obj')
             q_vals = list()
             for q in q_val_ls:
+                q = tf.expand_dims(q, axis=-1)
                 qq = tf.compat.v1.nn.conv2d(
                     q,
                     filter=subj_sa_isolate_transition_function,
@@ -158,7 +160,13 @@ class PlanningNet(object):
                 strides=[1, 1, 1, 1],
                 padding='SAME',
                 data_format='channels_first',
-                kernel_initializer=ma_transition_function)
+                kernel_initializer=tf.compat.v1.truncated_normal_initializer(
+                    mean=1.0 / (9.0 ** 2),
+                    stddev=1.0 / 90.0,
+                    dtype=tf.float32),
+                name='val_func',
+                reuse=reuse)
+            reuse = True
             q_vals_interact = tf.reshape(
                 q_vals_interact,
                 shape=q_vals_interact.get_shape().as_list()[:1] +

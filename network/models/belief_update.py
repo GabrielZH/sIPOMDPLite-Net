@@ -82,7 +82,7 @@ class BeliefFilterNet(object):
         b_interaction = tf.reshape(
             b_interaction,
             shape=b_interaction.get_shape().as_list()[:-2] +
-                  np.prod(b_interaction.get_shape().as_list()[-2:]))
+                  [np.prod(b_interaction.get_shape().as_list()[-2:])])
         b_interaction_ls = tf.unstack(
             b_interaction,
             axis=-1,
@@ -91,9 +91,9 @@ class BeliefFilterNet(object):
         i = 0
         for b in b_interaction_ls:
             b = tf.expand_dims(b, axis=1)
-            ma_transition_function = \
-                SIPOMDPLiteFrames.get_ma_transition_function4filtering(
-                    name='ma_trans_func_filtering_' + str(i))
+            # ma_transition_function = \
+            #     SIPOMDPLiteFrames.get_ma_transition_function4filtering(
+            #         name='ma_trans_func_filtering_' + str(i))
             pred_b = conv4d(
                 b,
                 filters=1,
@@ -101,7 +101,12 @@ class BeliefFilterNet(object):
                 strides=[1, 1, 1, 1],
                 padding='SAME',
                 data_format='channels_first',
-                kernel_initializer=ma_transition_function)
+                kernel_initializer=tf.compat.v1.truncated_normal_initializer(
+                    mean=1.0 / (9.0 ** 2),
+                    stddev=1.0 / 90.0,
+                    dtype=tf.float32),
+                name='belief_update_act_%d' % i,
+                reuse=False)
             pred_b_interaction.append(pred_b)
             i += 1
         pred_b_interaction = tf.stack(
@@ -114,7 +119,7 @@ class BeliefFilterNet(object):
         subj_a_idx = BeliefFilterNet.get_action_index_vector(
             action=subj_action,
             num_action=num_action)
-        subj_a_idx = subj_a_idx[:, None, None, None, None]
+        subj_a_idx = subj_a_idx[:, None, None, None, None, :, None]
         obj_a_idx = BeliefFilterNet.get_action_index_vector(
             action=obj_action,
             num_action=num_action)
@@ -151,9 +156,9 @@ class BeliefFilterNet(object):
         obj_a_idx = BeliefFilterNet.get_action_index_vector(
             action=obj_action,
             num_action=num_action)
-        obj_a_idx = obj_a_idx[:, None, None, None]
+        obj_a_idx = obj_a_idx[:, None, None]
         for b in b_non_interaction_obj_ls:
-            pred_b = tf.compat.v1.depthwise_conv2d(
+            pred_b = tf.compat.v1.nn.depthwise_conv2d(
                 b,
                 filter=obj_sa_isolate_transition_function,
                 strides=[1, 1, 1, 1],
@@ -167,11 +172,12 @@ class BeliefFilterNet(object):
             pred_b_non_interaction_obj,
             axis=-1,
             name='stack_b_non_interact_over_subj')
+        # print("Shape of belief after obj update:", pred_b_non_interaction_obj.get_shape().as_list())
         pred_b_non_interaction_obj = tf.reshape(
             pred_b_non_interaction_obj,
             shape=pred_b_non_interaction_obj.get_shape().as_list()[:1] +
                   [np.prod(pred_b_non_interaction_obj.get_shape().as_list()[1:3])] +
-                  pred_b_non_interaction_obj.get_shape().as_list()[3:])
+                  belief.get_shape().as_list()[1:3] + [num_action])
         pred_b_non_interaction_subj_ls = tf.unstack(
             pred_b_non_interaction_obj,
             axis=1,
@@ -180,9 +186,9 @@ class BeliefFilterNet(object):
         subj_a_idx = BeliefFilterNet.get_action_index_vector(
             action=subj_action,
             num_action=num_action)
-        subj_a_idx = subj_a_idx[:, None, None, None]
+        subj_a_idx = subj_a_idx[:, None, None]
         for b in pred_b_non_interaction_subj_ls:
-            pred_b = tf.compat.v1.depthwise_conv2d(
+            pred_b = tf.compat.v1.nn.depthwise_conv2d(
                 b,
                 filter=subj_sa_isolate_transition_function,
                 strides=[1, 1, 1, 1],
@@ -198,7 +204,7 @@ class BeliefFilterNet(object):
             name='stack_b_non_interact_over_obj')
         pred_b_non_interaction = tf.reshape(
             pred_b_non_interaction,
-            shape=pred_b_non_interaction_obj.get_shape().as_list()[:-1])
+            shape=belief.get_shape().as_list()[:-2])
 
         # Combine the predicted belief for interaction and
         # non-interaction.
