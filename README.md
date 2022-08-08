@@ -1,6 +1,7 @@
 # sIPOMDPLite-Net
 This repo contains the TensorFlow implementation of our paper: [sIPOMDPLite-Net: Lightweight, Self-Interested Learning and Planning in POSGs with Sparse Interactions](https://arxiv.org/pdf/2202.11188.pdf). The paper has not been published yet and the code is still in the process of building.
 # Data Generation
+Both single-agent and multiagent data can be generated in the manner of the following command.
 ```
 python domains/tiger_grid/multi_agent/single_interaction_condition/expert_traj_generator.py --db_path PATH_TO_GENERATED_DATA --train_envs NUM_TRAIN_ENVS 
 --eval_envs NUM_TEST_ENVS --train_trajs_per_env NUM_TRAJECTORIES_PER_TRAIN_ENVS --eval_trajs_per_env NUM_TRAJECTORIES_PER_TEST_ENVS --grid_n GRID_LENGTH 
