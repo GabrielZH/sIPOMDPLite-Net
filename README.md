@@ -1,5 +1,5 @@
 # sIPOMDPLite-Net
-Lightweight, Self-Interested Learning and Planning in POSGs with Sparse Interactions.
+This repo contains the TensorFlow implementation of our paper: [sIPOMDPLite-Net: Lightweight, Self-Interested Learning and Planning in POSGs with Sparse Interactions](https://arxiv.org/pdf/2202.11188.pdf). The paper has not been published yet and the code is still in the process of building.
 # Data Generation
 ```
 python domains/tiger_grid/multi_agent/single_interaction_condition/expert_traj_generator.py --db_path PATH_TO_GENERATED_DATA --train_envs NUM_TRAIN_ENVS 
