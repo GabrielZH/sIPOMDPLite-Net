@@ -8,9 +8,19 @@ python domains/tiger_grid/multi_agent/single_interaction_condition/expert_traj_g
 ```
 Arguments listed in the above command are required. For all available arguements including optional ones, please refer to the domain configuration file [tiger_grid.py](./configs/envs/tiger_grid.py)
 # Model Training
+## Single-Agent Model Pre-Training
+To train the model from scratch:
+```
+python pretrained_single_agent_model/pretrainer.py --db_path PARENT_DIR_TO_TRAINING_DATA -save_to_path PATH_TO_NEW_MODEL
+```
+To further train an existing model:
+```
+python pretrained_single_agent_model/pretrainer.py --db_path PARENT_DIR_TO_TRAINING_DATA --load_model PATH_TO_EXISTING_MODEL -save_to_path PATH_TO_NEW_MODEL
+```
+## Multiagent Model Training based on Single-Agent Model
 To train the network from scratch:
 ```
-python main.py --db_path PARENT_DIR_TO_TRAINING_DATA --load_model PATH_TO_EXISTING_MODEL
+python main.py --db_path PARENT_DIR_TO_TRAINING_DATA --save_to_path PATH_TO_NEW_MODEL
 ```
 To further train an existing model:
 ```
